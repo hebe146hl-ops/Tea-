@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>茶運占卜師</title>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background: #fdf6e9; color: #3e2723; text-align: center; margin: 0; padding: 20px; }
+        .container { max-width: 500px; margin: auto; border: 2px solid #d4af37; border-radius: 15px; padding: 40px 20px; background: white; min-height: 80vh; display: flex; flex-direction: column; justify-content: center; }
+        h1 { color: #c62828; margin-bottom: 30px; }
+        #tea-pot { font-size: 80px; margin-bottom: 20px; transition: transform 0.1s; }
+        .shake { animation: shake 0.5s infinite; }
+        @keyframes shake { 0% { transform: rotate(0); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0); } }
+        button { background: #c62828; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 30px; cursor: pointer; transition: 0.3s; }
+        button:disabled { background: #ccc; }
+        #result { margin-top: 30px; display: none; }
+        .luck-rank { font-size: 40px; font-weight: bold; color: #c62828; margin: 10px 0; }
+        .tea-name { font-size: 24px; color: #5d4037; font-weight: bold; }
+        .prize-box { background: #fff3dd; border: 1px dashed #c62828; padding: 15px; margin-top: 20px; border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="main-ui">
+        <h1>🍵 茶運占卜師</h1>
+        <div id="tea-pot">🫖</div>
+        <p>想知道今天適合喝什麼茶嗎？</p>
+        <button onclick="startDraw()">點擊抽取今日茶運</button>
+    </div>
+
+    <div id="result">
+        <p>您的今日占卜結果：</p>
+        <div class="luck-rank" id="luck-rank"></div>
+        <div class="tea-name" id="tea-name"></div>
+        <p id="tea-msg"></p>
+        <div id="prize-info" class="prize-box" style="display:none;">
+            🎉 恭喜獲獎！憑此截圖向店員領取獎品
+        </div>
+        <button onclick="location.reload()" style="background:#5d4037; margin-top: 20px;">重新占卜</button>
+    </div>
+</div>
+
+<script>
+    const fortunes = [
+        { rank: "大吉", tea: "大紅袍", msg: "紅運當頭，事事順心！", prize: true },
+        { rank: "小吉", tea: "茉莉花茶", msg: "清香浮動，今日會有好事發生。", prize: false },
+        { rank: "中吉", tea: "鐵觀音", msg: "韻味悠長，適合穩打穩紮的一天。", prize: false },
+        { rank: "平", tea: "白牡丹", msg: "歲月靜好，適合安靜品茗思考。", prize: false }
+    ];
+
+    function startDraw() {
+        const pot = document.getElementById('tea-pot');
+        const btn = document.querySelector('button');
+        btn.disabled = true;
+        pot.classList.add('shake');
+
+        // 模擬抽籤動畫 1.5 秒
+        setTimeout(() => {
+            pot.classList.remove('shake');
+            const res = fortunes[Math.floor(Math.random() * fortunes.length)];
+            
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('result').style.display = 'block';
+            
+            document.getElementById('luck-rank').innerText = res.rank;
+            document.getElementById('tea-name').innerText = "推薦： " + res.tea;
+            document.getElementById('tea-msg').innerText = res.msg;
+            
+            if (res.prize) {
+                document.getElementById('prize-info').style.display = 'block';
+            }
+        }, 1500);
+    }
