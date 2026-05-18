@@ -1,75 +1,225 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>茶運占卜師</title>
+    <title>茶運占卜師 - 冷知識大挑戰</title>
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; background: #fdf6e9; color: #3e2723; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 500px; margin: auto; border: 2px solid #d4af37; border-radius: 15px; padding: 40px 20px; background: white; min-height: 80vh; display: flex; flex-direction: column; justify-content: center; }
-        h1 { color: #c62828; margin-bottom: 30px; }
-        #tea-pot { font-size: 80px; margin-bottom: 20px; transition: transform 0.1s; }
+        .container { max-width: 500px; margin: auto; border: 2px solid #d4af37; border-radius: 15px; padding: 30px 20px; background: white; min-height: 85vh; display: flex; flex-direction: column; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #c62828; margin-bottom: 10px; font-size: 28px; }
+        .progress { font-size: 14px; color: #7f8c8d; margin-bottom: 20px; }
+        .quiz-box { margin-top: 10px; }
+        .question { font-size: 20px; font-weight: bold; margin-bottom: 25px; color: #5d4037; line-height: 1.4; }
+        .option-btn { display: block; width: 100%; background: #fff; border: 2px solid #e0d5c1; padding: 15px; margin-bottom: 15px; font-size: 16px; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; color: #3e2723; }
+        .option-btn:hover { background: #fff3dd; border-color: #d4af37; }
+        
+        /* 答題反饋彈窗 */
+        .feedback-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10; justify-content: center; align-items: center; }
+        .feedback-content { background: white; width: 85%; max-width: 400px; padding: 30px 20px; border-radius: 15px; text-align: center; }
+        .feedback-title { font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+        .feedback-text { font-size: 16px; color: #5d4037; margin-bottom: 25px; line-height: 1.5; }
+        .next-btn { background: #c62828; color: white; border: none; padding: 12px 30px; font-size: 16px; border-radius: 25px; cursor: pointer; }
+
+        /* 抽籤與結果頁 */
+        #pot-stage, #result-stage { display: none; }
+        #tea-pot { font-size: 100px; margin: 30px 0; transition: transform 0.1s; }
         .shake { animation: shake 0.5s infinite; }
         @keyframes shake { 0% { transform: rotate(0); } 25% { transform: rotate(10deg); } 75% { transform: rotate(-10deg); } 100% { transform: rotate(0); } }
-        button { background: #c62828; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 30px; cursor: pointer; transition: 0.3s; }
-        button:disabled { background: #ccc; }
-        #result { margin-top: 30px; display: none; }
-        .luck-rank { font-size: 40px; font-weight: bold; color: #c62828; margin: 10px 0; }
-        .tea-name { font-size: 24px; color: #5d4037; font-weight: bold; }
-        .prize-box { background: #fff3dd; border: 1px dashed #c62828; padding: 15px; margin-top: 20px; border-radius: 10px; }
+        .luck-rank { font-size: 45px; font-weight: bold; color: #c62828; margin: 15px 0; letter-spacing: 2px; }
+        .tea-name { font-size: 26px; color: #5d4037; font-weight: bold; margin-bottom: 10px; }
+        .prize-box { background: #fff3dd; border: 2px dashed #c62828; padding: 15px; margin: 25px 0; border-radius: 10px; font-weight: bold; font-size: 18px; color: #c62828; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="main-ui">
-        <h1>🍵 茶運占卜師</h1>
-        <div id="tea-pot">🫖</div>
-        <p>想知道今天適合喝什麼茶嗎？</p>
-        <button onclick="startDraw()">點擊抽取今日茶運</button>
+    <div id="quiz-stage">
+        <h1>🍵 茶盲大挑戰</h1>
+        <div class="progress" id="progress-text">問題 1 / 3</div>
+        <div class="quiz-box">
+            <div class="question" id="question-text">載入中...</div>
+            <div id="options-container"></div>
+        </div>
     </div>
 
-    <div id="result">
-        <p>您的今日占卜結果：</p>
+    <div id="pot-stage">
+        <h1>🔮 恭喜完成挑戰！</h1>
+        <p id="score-summary" style="font-size: 18px; font-weight: bold; color: #5d4037;"></p>
+        <p>答對越多題，抽中【大吉】換獎品機會越高！</p>
+        <div id="tea-pot">🫖</div>
+        <button class="next-btn" style="font-size: 18px; padding: 15px 40px;" onclick="startDraw()">搖動籤筒・抽取茶運</button>
+    </div>
+
+    <div id="result-stage">
+        <p style="font-size: 18px; margin: 0;">您的今日茶運占卜結果</p>
         <div class="luck-rank" id="luck-rank"></div>
         <div class="tea-name" id="tea-name"></div>
-        <p id="tea-msg"></p>
+        <p id="tea-msg" style="font-size: 16px; padding: 0 10px;"></p>
+        
         <div id="prize-info" class="prize-box" style="display:none;">
-            🎉 恭喜獲獎！憑此截圖向店員領取獎品
+            🎉 恭喜獲得【大吉】特獎！<br><span style="font-size:14px; font-weight:normal; color:#3e2723;">請即向攤位職員出示此畫面領獎</span>
         </div>
-        <button onclick="location.reload()" style="background:#5d4037; margin-top: 20px;">重新占卜</button>
+        
+        <button class="next-btn" style="background:#5d4037; margin-top: 20px;" onclick="location.reload()">再玩一次</button>
+    </div>
+</div>
+
+<div class="feedback-overlay" id="feedback-modal">
+    <div class="feedback-content">
+        <div class="feedback-title" id="modal-title"></div>
+        <div class="feedback-text" id="modal-text"></div>
+        <button class="next-btn" id="modal-btn" onclick="nextQuestion()">下一題</button>
     </div>
 </div>
 
 <script>
-    const fortunes = [
-        { rank: "大吉", tea: "大紅袍", msg: "紅運當頭，事事順心！", prize: true },
-        { rank: "小吉", tea: "茉莉花茶", msg: "清香浮動，今日會有好事發生。", prize: false },
-        { rank: "中吉", tea: "鐵觀音", msg: "韻味悠長，適合穩打穩紮的一天。", prize: false },
-        { rank: "平", tea: "白牡丹", msg: "歲月靜好，適合安靜品茗思考。", prize: false }
+    // 題庫設計（廣東話玩味版）
+    const questions = [
+        {
+            q: "Matcha（抹茶）來自邊度？日本？其實佢祖籍係……",
+            options: [
+                "當然係日本宇治啦，唔通喺大埔？",
+                "其實係中國唐宋朝，由日本和尚帶過江！",
+                "其實發源自韓國濟州島，因為火山土最啱種茶。"
+            ],
+            correct: 1,
+            fact: "🍵 沒想到吧！抹茶起源於中國隋唐，在宋代達到鼎盛（當時叫點茶）。後來日本僧人來中國留學，才把這套全套技術帶回日本發揚光大！"
+        },
+        {
+            q: "綠茶、紅茶、烏龍茶……風味差咁遠，其實根本係……？",
+            options: [
+                "三種完全唔同嘅植物，種植環境都唔一樣。",
+                "同一種植物（茶樹葉），只係製茶時『發酵程度』唔同！",
+                "同一種植物，但紅茶是用樹葉，綠茶是用樹根。"
+            ],
+            correct: 1,
+            fact: "🌱 沒錯！它們全都來自同一種植物——茶樹（Camellia sinensis）。全發酵就變成紅茶，不發酵就是綠茶，半發酵就是烏龍茶！"
+        },
+        {
+            q: "返工開會好躁，想提神又不想心悸、心跳加速，飲咩最有用？",
+            options: [
+                "特濃美式咖啡（Double Espresso）狂灌",
+                "港式絲襪奶茶，夠多奶",
+                "飲杯抹茶（Matcha）或者白茶"
+            ],
+            correct: 2,
+            fact: "🧘 答對了！茶葉裡含有豐富的『茶氨酸』，能促進大腦分泌多巴胺，幫你專注的同時放鬆神經，提供持久穩定的提神效果，不會像咖啡那樣帶來心悸感（Jitters）！"
+        }
     ];
 
+    let currentIdx = 0;
+    let score = 0;
+
+    // 初始化題目
+    function loadQuestion() {
+        if (currentIdx < questions.length) {
+            document.getElementById('progress-text').innerText = `問題 ${currentIdx + 1} / ${questions.length}`;
+            document.getElementById('question-text').innerText = questions[currentIdx].q;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            questions[currentIdx].options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index);
+                container.appendChild(btn);
+            });
+        } else {
+            // 答題結束，進入準備抽籤階段
+            document.getElementById('quiz-stage').style.display = 'none';
+            document.getElementById('pot-stage').style.display = 'flex';
+            document.getElementById('score-summary').innerText = `你答對了 ${score} / ${questions.length} 題！`;
+        }
+    }
+
+    // 檢查答案
+    function checkAnswer(selected) {
+        const modal = document.getElementById('feedback-modal');
+        const title = document.getElementById('modal-title');
+        const text = document.getElementById('modal-text');
+        const btn = document.getElementById('modal-btn');
+        
+        if (selected === questions[currentIdx].correct) {
+            score++;
+            title.innerText = "🎉 方案正確！";
+            title.style.color = "#27ae60";
+        } else {
+            title.innerText = "❌ 答錯啦！";
+            title.style.color = "#c62828";
+        }
+        
+        text.innerText = questions[currentIdx].fact;
+        
+        if (currentIdx === questions.length - 1) {
+            btn.innerText = "看最終戰績";
+        } else {
+            btn.innerText = "下一題";
+        }
+        
+        modal.style.display = 'flex';
+    }
+
+    function nextQuestion() {
+        document.getElementById('feedback-modal').style.display = 'none';
+        currentIdx++;
+        loadQuestion();
+    }
+
+    // 抽籤邏輯（根據分數調整大吉機率）
     function startDraw() {
         const pot = document.getElementById('tea-pot');
-        const btn = document.querySelector('button');
+        const btn = document.querySelector('#pot-stage .next-btn');
         btn.disabled = true;
         pot.classList.add('shake');
 
-        // 模擬抽籤動畫 1.5 秒
         setTimeout(() => {
             pot.classList.remove('shake');
-            const res = fortunes[Math.floor(Math.random() * fortunes.length)];
+            document.getElementById('pot-stage').style.display = 'none';
+            document.getElementById('result-stage').style.display = 'block';
+
+            // 隨機數
+            const rand = Math.random() * 100;
+            let finalLuck = "";
+            let finalTea = "";
+            let finalMsg = "";
+            let isPrize = false;
+
+            // 機率演算法：答對 3 題有 40% 機率中大吉；答對 2 題 20%；其餘 5%
+            let bigLuckChance = 5;
+            if (score === 3) bigLuckChance = 40;
+            else if (score === 2) bigLuckChance = 20;
+
+            if (rand < bigLuckChance) {
+                finalLuck = "大吉 (特獎)";
+                finalTea = "武夷岩茶・大紅袍";
+                finalMsg = "【今日運勢：紅運當頭】智慧與運氣並存的你，今天堪稱全場焦點！適合飲一杯霸氣回甘的大紅袍，慶祝你的完美勝出。";
+                isPrize = true;
+            } else if (rand < bigLuckChance + 40) {
+                finalLuck = "中吉";
+                finalTea = "安溪鐵觀音";
+                finalMsg = "【今日運勢：行雲流水】生活節奏剛剛好，事業與學業穩步上升。喝杯觀音茶，齒夾留香，靜待好運落地。";
+            } else {
+                finalLuck = "小吉";
+                finalTea = "茉莉花茶";
+                finalMsg = "【今日運勢：清香小確幸】雖然沒有大富大貴，但身邊充滿了溫暖的小確幸。適合來一杯小清新的茉莉綠茶，保持好心情。";
+            }
+
+            document.getElementById('luck-rank').innerText = finalLuck;
+            document.getElementById('tea-name').innerText = "推薦： " + finalTea;
+            document.getElementById('tea-msg').innerText = finalMsg;
             
-            document.getElementById('main-ui').style.display = 'none';
-            document.getElementById('result').style.display = 'block';
-            
-            document.getElementById('luck-rank').innerText = res.rank;
-            document.getElementById('tea-name').innerText = "推薦： " + res.tea;
-            document.getElementById('tea-msg').innerText = res.msg;
-            
-            if (res.prize) {
+            if (isPrize) {
                 document.getElementById('prize-info').style.display = 'block';
             }
         }, 1500);
     }
+
+    // 啟動
+    loadQuestion();
+</script>
+
+</body>
+</html>
